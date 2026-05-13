@@ -7,5 +7,4 @@
   - Mongoose
   - Zod
   - MongoDB
-  - better-auth
   - 
