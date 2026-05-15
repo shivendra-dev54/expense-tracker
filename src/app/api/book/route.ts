@@ -7,7 +7,7 @@ export const POST = errorHandlerWrap(async (request: Request) => {
   const resp: ApiResponse<null> = {
     status: true,
     status_code: 200,
-    message: "testing... admin",
+    message: "testing... book",
     data: null
   }
   return Response.json(resp, { status: 200 });

@@ -61,3 +61,21 @@
       {}
       ````
 
+
+### plan
+**expense:**
+<br>every body will have the name of the book
+  - POST /	-> create a new expense
+  - GET /	-> get all the expenses in a certain book
+  - POST /:id	-> update a certain expense
+  - DELETE/:id	-> delete a certain expense
+
+**entrybook:**
+  - GET /	-> get all the books
+  - POST /	-> create a new book
+  - POST /:id	-> update the book
+  - DELETE /:id	-> delete a book
+
+**admin:**
+  - GET /	-> get all the users
+  - DELETE /:id	-> delete that user, its books, and its expenses

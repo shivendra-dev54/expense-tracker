@@ -11,7 +11,13 @@ export class InvalidDataError extends Error {
 }
 
 export class NotFoundError extends Error {
-  constructor(message?: string){
+  constructor(message?: string) {
     super(message || "Not found!");
+  }
+}
+
+export class UnauthorizedError extends Error {
+  constructor(message?: string) {
+    super(message || "Unthorized.");
   }
 }
