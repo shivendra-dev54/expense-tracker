@@ -2,7 +2,7 @@ import { IUser, User } from "@/db/schemas/user.schema";
 import { InvalidDataError, NotFoundError } from "@/util/customErrors";
 import { compare_password, hash_password } from "@/services/pass.service";
 import { dbConnect } from "@/db";
-import { token_generator } from "./token.service";
+import { token_decoder, token_generator } from "./token.service";
 
 export const create_user_service = async (user_data: IUser) => {
   // validate data
@@ -65,7 +65,7 @@ export const authenticate_user = async (body: Partial<IUser>) => {
   // compare passwords 
   const user_from_db = user_by_email ? user_by_email : user_by_username;
   const is_pass_correct = compare_password(password, user_from_db.password);
-  if(!is_pass_correct){
+  if (!is_pass_correct) {
     throw new InvalidDataError("incorrect password!");
   }
 
@@ -80,4 +80,31 @@ export const authenticate_user = async (body: Partial<IUser>) => {
   const { access_token, refresh_token } = await token_generator(user);
   return { access_token, refresh_token };
 
+}
+
+
+export const refresh_token_service = async (token: string) => {
+  const payload: Partial<IUser> = await token_decoder(token);
+  const email = payload?.email;
+  if(!email){
+    throw new InvalidDataError("refresh token not valid, login again.");
+  }
+
+  // check if user exists
+  await dbConnect();
+  const user_from_db = await User.findOne({ email });
+  if (!user_from_db) {
+    throw new NotFoundError("user not found!");
+  }
+
+  // build the payload for the tokens
+  let user: Partial<IUser> = {
+    username: user_from_db.username,
+    email: user_from_db.email,
+    fullname: user_from_db.fullname
+  }
+
+  //generate tokens
+  const { access_token, refresh_token } = await token_generator(user);
+  return { access_token, refresh_token };
 }

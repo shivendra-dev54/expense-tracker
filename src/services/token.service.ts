@@ -20,6 +20,6 @@ export const token_generator = async (payload: Partial<IUser>) => {
 }
 
 export const token_decoder = async (token: string) => {
-  const payload = await jwtVerify(token, secret) as unknown as Partial<IUser>;
-  return payload;
+  const { payload } = await jwtVerify(token, secret);
+  return payload as unknown as Partial<IUser>;
 }
