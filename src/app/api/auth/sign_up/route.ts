@@ -15,5 +15,5 @@ export const POST = errorHandlerWrap(async (req: Request, res: Response) => {
     message: "user created successfully",
     data: new_user
   }
-  return Response.json(response, {status: 201});
+  return Response.json(response, { status: 201 });
 });

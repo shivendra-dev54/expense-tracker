@@ -9,3 +9,9 @@ export class InvalidDataError extends Error {
     super(message || "Invalid data!");
   }
 }
+
+export class NotFoundError extends Error {
+  constructor(message?: string){
+    super(message || "Not found!");
+  }
+}

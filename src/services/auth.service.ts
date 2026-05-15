@@ -1,7 +1,8 @@
 import { IUser, User } from "@/db/schemas/user.schema";
-import { InvalidDataError } from "@/util/customErrors";
-import { hash_password } from "@/services/pass.service";
+import { InvalidDataError, NotFoundError } from "@/util/customErrors";
+import { compare_password, hash_password } from "@/services/pass.service";
 import { dbConnect } from "@/db";
+import { token_generator } from "./token.service";
 
 export const create_user_service = async (user_data: IUser) => {
   // validate data
@@ -9,11 +10,11 @@ export const create_user_service = async (user_data: IUser) => {
   const username = user_data.username.trim();
   const email = user_data.email.trim();
   const password = user_data.password.trim();
-  
+
   if (!fullname.trim() || !username.trim() || !email.trim() || !password.trim()) {
     throw new InvalidDataError();
   }
-  
+
   // check if user exists
   await dbConnect();
   const user_with_same_username = await User.findOne({ username });
@@ -42,4 +43,41 @@ export const create_user_service = async (user_data: IUser) => {
     "username": new_user.username,
     "email": new_user.email
   }
+}
+
+export const authenticate_user = async (body: Partial<IUser>) => {
+  const username = body?.username?.trim();
+  const email = body?.email?.trim();
+  const password = body.password?.trim();
+
+  if ((!username && !email) || !password) {
+    throw new InvalidDataError();
+  }
+
+  // check if user exists
+  await dbConnect();
+  const user_by_username = await User.findOne({ username });
+  const user_by_email = await User.findOne({ email });
+  if ((!user_by_email && !user_by_username)) {
+    throw new NotFoundError("user not found!");
+  }
+
+  // compare passwords 
+  const user_from_db = user_by_email ? user_by_email : user_by_username;
+  const is_pass_correct = compare_password(password, user_from_db.password);
+  if(!is_pass_correct){
+    throw new InvalidDataError("incorrect password!");
+  }
+
+  // build the payload for the tokens
+  let user: Partial<IUser> = {
+    username: user_from_db.username,
+    email: user_from_db.email,
+    fullname: user_from_db.fullname
+  }
+
+  //generate tokens
+  const { access_token, refresh_token } = await token_generator(user);
+  return { access_token, refresh_token };
+
 }

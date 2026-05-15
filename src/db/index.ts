@@ -9,7 +9,7 @@ let cached = global.mongoose;
 
 export const dbConnect = async () => {
   if (cached.conn) {
-    console.log("the db pre return: " + cached.conn);
+    // console.log("the db pre return: " + cached.conn);
     return cached.conn;
   }
   if (!cached.promise) {

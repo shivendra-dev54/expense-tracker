@@ -6,6 +6,7 @@ export const errorHandlerWrap = (handler: Function) => {
       return await handler(req, context);
     }
     catch (e: any) {
+      // console.log(e);
       const response: ApiResponse<null> = {
         status: false,
         status_code: 400,
