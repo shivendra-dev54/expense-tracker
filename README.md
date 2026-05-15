@@ -7,4 +7,5 @@
   - Mongoose
   - Zod
   - MongoDB
-  - 
+  - bcryptjs
+  - jose-jwt
