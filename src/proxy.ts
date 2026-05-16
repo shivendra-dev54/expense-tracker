@@ -1,16 +1,12 @@
 import { cookies } from 'next/headers'
-import { NextResponse, type NextRequest } from 'next/server'
+import { NextResponse } from 'next/server'
 import { token_decoder } from './services/token.service';
-import { IUser, User } from './db/schemas/user.schema';
+import { User } from './db/schemas/user.schema';
 import { UnauthorizedError } from './util/customErrors';
 import { ApiResponse } from './util/ApiResponse';
 import { dbConnect } from './db';
 
-export interface AuthenticatedRequest extends NextRequest {
-  user: Partial<IUser>;
-}
-
-export async function proxy(request: AuthenticatedRequest) {
+export async function proxy(request: Request) {
   try {
     const cookieStore = await cookies();
     const accessToken = cookieStore.get("access_token")?.value || "";
@@ -21,12 +17,11 @@ export async function proxy(request: AuthenticatedRequest) {
     if (!user_from_db.username) {
       throw new UnauthorizedError();
     }
-    // console.log("meow", user_from_db);
 
     const requestHeaders = new Headers(request.headers);
 
     requestHeaders.set('x-user-username', user_from_db.username);
-    requestHeaders.set('x-user-email', user_from_db.email);
+    requestHeaders.set('x-user-id', user_from_db._id);
 
     return NextResponse.next({
       request: {
@@ -48,6 +43,7 @@ export async function proxy(request: AuthenticatedRequest) {
 export const config = {
   matcher: [
     "/api/expense/:path*",
+    "/api/book/:path*",
     "/api/admin/:path*"
   ]
 }

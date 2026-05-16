@@ -3,6 +3,7 @@ import { InvalidDataError, NotFoundError } from "@/util/customErrors";
 import { compare_password, hash_password } from "@/services/pass.service";
 import { dbConnect } from "@/db";
 import { token_decoder, token_generator } from "./token.service";
+import { EntryBook, IEntryBook } from "@/db/schemas/entrybook.schema";
 
 export const create_user_service = async (user_data: IUser) => {
   // validate data
@@ -38,6 +39,15 @@ export const create_user_service = async (user_data: IUser) => {
     password: hashed_pass
   };
   const new_user = await User.create(user);
+
+  // create default book for the user
+  const def_book: IEntryBook = {
+    name: "me",
+    balance: 0,
+    user_id: new_user._id
+  };
+  await EntryBook.create(def_book);
+
   //  return new user without password
   return {
     "username": new_user.username,
@@ -86,7 +96,7 @@ export const authenticate_user = async (body: Partial<IUser>) => {
 export const refresh_token_service = async (token: string) => {
   const payload: Partial<IUser> = await token_decoder(token);
   const email = payload?.email;
-  if(!email){
+  if (!email) {
     throw new InvalidDataError("refresh token not valid, login again.");
   }
 

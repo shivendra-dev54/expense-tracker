@@ -12,18 +12,16 @@ const EntryBookSchema = new Schema<IEntryBook>(
       type: String,
       required: true,
       trim: true,
-      allowNull: false
     },
     user_id: {
       type: Schema.Types.ObjectId,
       ref: "User",
-      allowNull: false
+      required: true
     },
     balance: {
       type: Number,
       required: true,
       default: 0,
-      allowNull: false
     }
   },
   {

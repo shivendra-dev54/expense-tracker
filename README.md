@@ -24,7 +24,7 @@
 
 - auth routes
   - sign up
-    - path = `/api/auth/sign_up`
+    - path = POST `/api/auth/sign_up`
     - body =
       ````json
       {
@@ -36,7 +36,7 @@
       ````
   
   - sign in
-    - path = `/api/auth/sign_in`
+    - path = POST `/api/auth/sign_in`
     - body =
       ````json
       {
@@ -48,33 +48,61 @@
     - desc = either `username` or `email` is required.
   
   - refresh
-    - path = `/api/auth/refresh`
+    - path = POST `/api/auth/refresh`
     - body =
       ````json
       {}
       ````
 
   - logout
-    - path = `/api/auth/logout`
+    - path = POST `/api/auth/logout`
+    - body =
+      ````json
+      {}
+      ````
+
+- **entrybook routes:**
+  - create
+    - path = POST `/api/book`
+    - body =
+      ````json
+      {
+        "name": "jan_book"
+      }
+      ````
+  - read
+    - path = GET `/api/book`
+    - body =
+      ````json
+      {}
+      ````
+  - update
+    - path = POST `/api/book/:id`
+    - body =
+      ````json
+      {
+        "name": "new name"
+      }
+      ````
+  - delete
+    - path = DELETE `/api/book/:id`
     - body =
       ````json
       {}
       ````
 
 
+
+
+
+
 ### plan
 **expense:**
-<br>every body will have the name of the book
+<br>every body will have the id of the book
   - POST /	-> create a new expense
-  - GET /	-> get all the expenses in a certain book
+  - GET /:id	-> get all the expenses in a certain book
   - POST /:id	-> update a certain expense
   - DELETE/:id	-> delete a certain expense
-
-**entrybook:**
-  - GET /	-> get all the books
-  - POST /	-> create a new book
-  - POST /:id	-> update the book
-  - DELETE /:id	-> delete a book
 
 **admin:**
   - GET /	-> get all the users
