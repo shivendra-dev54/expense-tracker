@@ -30,7 +30,8 @@ const ExpenseSchema = new Schema<IExpense>(
     }
   },
   {
-    bufferCommands: false
+    bufferCommands: false,
+    timestamps: true
   }
 );
 
