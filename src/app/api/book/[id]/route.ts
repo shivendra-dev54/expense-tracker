@@ -43,4 +43,3 @@ export const DELETE = errorHandlerWrap(async (request: Request, { params }: Rout
     { status: 200 }
   );
 });
-

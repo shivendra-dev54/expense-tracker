@@ -21,7 +21,7 @@ export const createExpenseService = async (
   try {
     await session.withTransaction(async () => {
       // check if book exist and owned by user
-      const book = await EntryBook.findOne({ "user_id": user_id, "_id": book_id }).session(session);
+      const book = await EntryBook.findOne({ "_id": book_id, user_id }).session(session);
       if (!book) {
         throw new NotFoundError();
       }
@@ -55,7 +55,7 @@ export const readExpenseService = async (
   await dbConnect();
   const book_from_db = await EntryBook.findOne({
     _id: book_id,
-    user_id: user_id
+    user_id
   });
 
   if (!book_from_db) {
@@ -67,8 +67,10 @@ export const readExpenseService = async (
     entrybook_id: book_from_db._id
   });
 
-  book_from_db.expenses = expenses_in_book;
-  return book_from_db;
+  return {
+    book: book_from_db,
+    expenses: expenses_in_book
+  };
 }
 
 
@@ -107,7 +109,7 @@ export const updateExpenseAmountService = async (
 
   let expense;
   try {
-    session.withTransaction(async () => {
+    await session.withTransaction(async () => {
       expense = await Expense.findOne({
         user_id,
         _id: expense_id
@@ -140,13 +142,29 @@ export const deleteExpenseService = async (
   expense_id: Types.ObjectId
 ) => {
   await dbConnect();
-  const expense = await Expense.findOneAndDelete({
-    _id: expense_id,
-    user_id
-  });
 
-  if (!expense) {
-    throw new NotFoundError();
+  const session = await mongoose.startSession();
+
+  let expense;
+  try {
+    await session.withTransaction(async () => {
+      expense = await Expense.findOneAndDelete({
+        user_id,
+        _id: expense_id
+      });
+
+      if (!expense) {
+        throw new NotFoundError();
+      }
+
+      // balance update
+      const book = await EntryBook.findById(expense.entrybook_id);
+      book.balance -= parseInt(expense.amount);
+      await book.save();
+    });
+  }
+  finally {
+    await session.endSession();
   }
   return expense;
 }

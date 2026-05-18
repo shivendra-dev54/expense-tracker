@@ -91,19 +91,49 @@
       {}
       ````
 
+- **expense routes:**
+  - create
+    - path = POST `/api/expense`
+    - body =
+      ````json
+      {
+        "book_id": "some_id",
+        "amount": 10,
+        "message": "purchsed a pen."
+      }
+      ````
+  - read
+    - path = GET `/api/expense?book_id=id_of_the_book`
+    - body =
+      ````json
+      {}
+      ````
+  - update
+    - path = POST `/api/expense/:id`
+    - body =
+      ````json
+      {
+        "amount": 90,
+        "message": "purchased 9 pens."
+      }
+      ````
+  - delete
+    - path = DELETE `/api/expense/:id`
+    - body =
+      ````json
+      {}
+      ````
+
 
 
 
 
 
 ### plan
-**expense:**
-<br>every body will have the id of the book
-  - POST /	-> create a new expense
-  - GET /:id	-> get all the expenses in a certain book
-  - POST /:id	-> update a certain expense
-  - DELETE/:id	-> delete a certain expense
 
 **admin:**
   - GET /	-> get all the users
   - DELETE /:id	-> delete that user, its books, and its expenses
+
+**user:**
+  - GET / -> this will return the user info as username, email, fullname

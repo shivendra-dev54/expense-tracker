@@ -28,8 +28,8 @@ export const createBookService = async (book_info: Pick<IEntryBook, "name" | "us
     balance: 0
   };
 
-  await EntryBook.create(new_book);
-  return new_book;
+  const saved_book = await EntryBook.create(new_book);
+  return saved_book;
 }
 
 // desc: this func will update name of the book
@@ -62,7 +62,7 @@ export const readBookService = async (user_id: string) => {
 // desc: this func will delete the expenses in that particular book as well
 export const deleteBookService = async (_id: string, user_id: string) => {
   await dbConnect();
-  await Expense.deleteMany({entrybook_id: _id});
+  await Expense.deleteMany({ entrybook_id: _id });
   const deleted_book = await EntryBook.findOneAndDelete({ _id, user_id });
   return deleted_book;
 }
