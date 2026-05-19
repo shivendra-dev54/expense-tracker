@@ -1,36 +1,30 @@
-import { getAdminAccessService, getAllUserListService } from "@/services/admin.service";
+import { deleteSelfService, getUserInfoService } from "@/services/user.service";
 import { ApiResponse } from "@/util/ApiResponse";
 import { errorHandlerWrap } from "@/util/errorHandlerWrap";
 import { Types } from "mongoose";
 
-export const POST = errorHandlerWrap(async (request: Request) => {
-
+export const GET = errorHandlerWrap(async (request: Request) => {
   const user_id = request.headers.get("x-user-id") as unknown as Types.ObjectId;
-  const { secret } = await request.json();
+  const user_info = await getUserInfoService(user_id);
 
-  await getAdminAccessService(
-    user_id,
-    secret
-  );
-
-  const resp: ApiResponse<null> = {
+  const resp: ApiResponse<any> = {
     status: true,
     status_code: 200,
-    message: "admin access grated.",
-    data: null
+    message: "user info fetched.",
+    data: user_info
   }
   return Response.json(resp, { status: 200 });
 });
 
 
-export const GET = errorHandlerWrap(async (request: Request) => {
+export const DELETE = errorHandlerWrap(async (request: Request) => {
   const user_id = request.headers.get("x-user-id") as unknown as Types.ObjectId;
-  const user_list = getAllUserListService(user_id);
+  await deleteSelfService(user_id);
   const resp: ApiResponse<any> = {
     status: true,
     status_code: 200,
-    message: "fetched all users.",
-    data: user_list
+    message: "user deleted sucessfully.",
+    data: null
   }
   return Response.json(resp, { status: 200 });
 });

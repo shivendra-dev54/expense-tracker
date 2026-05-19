@@ -4,7 +4,7 @@ import { InvalidDataError } from "@/util/customErrors";
 import { errorHandlerWrap } from "@/util/errorHandlerWrap";
 import { Types } from "mongoose";
 
-type RouteParams = {
+export type RouteParams = {
   params: Promise<{ id: string }>
 };
 
