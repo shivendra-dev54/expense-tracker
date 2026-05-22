@@ -1,9 +1,41 @@
 "use client";
 
+import { useAuthStore } from "@/Store/AuthStore";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 export default function Home() {
   const router = useRouter();
+  const [hasLoadedStore, setHasLoadedStore] = useState(false);
+  const { user } = useAuthStore();
+
+  useEffect(() => {
+    const unsubHydrate = useAuthStore.persist.onHydrate(() => setHasLoadedStore(false));
+    const unsubFinish = useAuthStore.persist.onFinishHydration(() => setHasLoadedStore(true));
+    if (useAuthStore.persist.hasHydrated()) {
+      setHasLoadedStore(true);
+    }
+    return () => {
+      unsubHydrate();
+      unsubFinish();
+    };
+  }, []);
+
+
+  useEffect(() => {
+    if (!hasLoadedStore) return;
+    if (user) {
+      router.push("/app/main")
+    }
+  }, [hasLoadedStore, router, user]);
+
+
+  if (!hasLoadedStore) {
+    return (<div className="bg-slate-950 text-white flex justify-center align-middle flex-col flex-1 text-center">
+      Loading your profile...
+    </div>);
+  }
+
 
   return (
     <div className="relative w-screen bg-slate-900 text-pink-100 text-center p-8 flex flex-col flex-1">

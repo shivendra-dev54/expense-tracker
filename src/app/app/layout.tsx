@@ -34,7 +34,7 @@ export default function AuthGuard(
 
   if (!hasLoadedStore) {
     return (
-      <div className="bg-slate-950 text-white flex justify-center align-middle">
+      <div className="bg-slate-900 text-white flex justify-center align-middle flex-col flex-1 text-center">
         Loading your profile...
       </div>
     );
