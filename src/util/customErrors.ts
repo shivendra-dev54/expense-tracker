@@ -21,3 +21,9 @@ export class UnauthorizedError extends Error {
     super(message || "Unthorized.");
   }
 }
+
+export class HandlableError extends Error {
+  constructor(message?: string) {
+    super(message || "Something went wrong.");
+  }
+}

@@ -7,7 +7,8 @@ export const POST = errorHandlerWrap(async (req: Request, res: Response) => {
   const body = await req.json();
   const {
     access_token,
-    refresh_token
+    refresh_token,
+    user
   } = await authenticate_user(body);
 
   const cookieStore = await cookies();
@@ -28,11 +29,11 @@ export const POST = errorHandlerWrap(async (req: Request, res: Response) => {
     path: "/"
   });
 
-  const resp: ApiResponse<null> = {
+  const resp: ApiResponse<any> = {
     status: true,
     status_code: 200,
     message: "logged in successfully.",
-    data: null
+    data: user
   };
   return Response.json(resp, { status: 200 });
 });

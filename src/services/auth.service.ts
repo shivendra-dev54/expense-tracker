@@ -1,5 +1,5 @@
 import { IUser, User } from "@/db/schemas/user.schema";
-import { InvalidDataError, NotFoundError } from "@/util/customErrors";
+import { HandlableError, InvalidDataError, NotFoundError } from "@/util/customErrors";
 import { compare_password, hash_password } from "@/services/pass.service";
 import { dbConnect } from "@/db";
 import { token_decoder, token_generator } from "./token.service";
@@ -22,10 +22,10 @@ export const create_user_service = async (user_data: IUser) => {
   const user_with_same_email = await User.findOne({ email });
 
   if (user_with_same_email) {
-    throw new InvalidDataError("user with this email already exists.");
+    throw new HandlableError("user with this email already exists.");
   }
   if (user_with_same_username) {
-    throw new InvalidDataError("user with this username already exists.");
+    throw new HandlableError("user with this username already exists.");
   }
 
   // hash pass
@@ -69,14 +69,14 @@ export const authenticate_user = async (body: Partial<IUser>) => {
   const user_by_username = await User.findOne({ username });
   const user_by_email = await User.findOne({ email });
   if ((!user_by_email && !user_by_username)) {
-    throw new NotFoundError("user not found!");
+    throw new HandlableError("user not found!");
   }
 
   // compare passwords 
   const user_from_db = user_by_email ? user_by_email : user_by_username;
-  const is_pass_correct = compare_password(password, user_from_db.password);
+  const is_pass_correct = await compare_password(password, user_from_db.password);
   if (!is_pass_correct) {
-    throw new InvalidDataError("incorrect password!");
+    throw new HandlableError("incorrect password!");
   }
 
   // build the payload for the tokens
@@ -88,7 +88,7 @@ export const authenticate_user = async (body: Partial<IUser>) => {
 
   //generate tokens
   const { access_token, refresh_token } = await token_generator(user);
-  return { access_token, refresh_token };
+  return { access_token, refresh_token, user };
 
 }
 
