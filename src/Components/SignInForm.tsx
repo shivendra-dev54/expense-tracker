@@ -12,7 +12,7 @@ export const SignInForm = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const router = useRouter();
-  const { setUser } = useAuthStore();
+  const { setUser, logout } = useAuthStore();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     e.preventDefault();
@@ -51,19 +51,21 @@ export const SignInForm = () => {
       const resp = await axiosRequestHandler(
         "/api/auth/sign_in",
         "POST",
-        userData
+        userData,
+        logout
       );
       const user_data = resp.data.data;
       setUser(user_data);
       router.push("/app/main");
     }
     catch (e: any) {
-      const code = e.response.status;
+      const code = e?.response?.status;
       if (code === 499) {
         errorNotification(e.response.data.message);
       }
       else {
         errorNotification("Something went wrong!");
+        console.log(e);
       }
     }
     setIsLoading(false);

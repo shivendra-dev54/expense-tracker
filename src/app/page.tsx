@@ -25,12 +25,18 @@ export default function Home() {
   useEffect(() => {
     if (!hasLoadedStore) return;
     if (user) {
-      router.push("/app/main")
+      router.push("/app/main");
     }
   }, [hasLoadedStore, router, user]);
 
 
   if (!hasLoadedStore) {
+    return (<div className="bg-slate-950 text-white flex justify-center align-middle flex-col flex-1 text-center">
+      Loading your profile...
+    </div>);
+  }
+
+  if (user) {
     return (<div className="bg-slate-950 text-white flex justify-center align-middle flex-col flex-1 text-center">
       Loading your profile...
     </div>);

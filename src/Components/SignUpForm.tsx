@@ -1,5 +1,6 @@
 "use client";
 
+import { useAuthStore } from "@/Store/AuthStore";
 import { axiosRequestHandler } from "@/util/axiosRequestHandler";
 import { errorNotification, successNotification } from "@/util/toastFunctionsDarkMode";
 import { useRouter } from "next/navigation";
@@ -13,6 +14,7 @@ export const SignUpForm = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const router = useRouter();
+  const { logout, setUser } = useAuthStore();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     e.preventDefault();
@@ -45,10 +47,11 @@ export const SignUpForm = () => {
     setIsLoading(true);
 
     try {
-      const resp = await axiosRequestHandler(
+      await axiosRequestHandler(
         "/api/auth/sign_up",
         "POST",
-        userData
+        userData,
+        logout
       );
 
       successNotification("account created!");
@@ -57,9 +60,10 @@ export const SignUpForm = () => {
       const resp_sign_in = await axiosRequestHandler(
         "/api/auth/sign_in",
         "POST",
-        userData
+        userData,
+        logout
       );
-      console.log(resp_sign_in.data.data);
+      setUser(resp_sign_in.data.data);
       router.push("/app/main");
     }
     catch (e: any) {
