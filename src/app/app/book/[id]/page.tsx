@@ -31,17 +31,19 @@ export default function BookPage() {
 
   return (
     <div className="w-full flex flex-col flex-1 bg-slate-900 text-white">
-      <div className="mb-4 self-center text-center font-bold mt-4">
-        <h1 className="text-3xl">
-          {book?.name}
-        </h1>
-        <h1 className="text-slate-600">
-          bal:
-          <span className={`${(book?.balance! < 0) ? ("text-red-400") : ("text-green-400")}`}>
-            {" " + book?.balance}
-          </span>
-        </h1>
-      </div>
+      {book?.name && (
+        <div className="mb-4 self-center text-center font-bold mt-4">
+          <h1 className="text-3xl">
+            {book?.name}
+          </h1>
+          <h1 className="text-slate-600">
+            bal:
+            <span className={`${(book?.balance! < 0) ? ("text-red-400") : ("text-green-400")}`}>
+              {" " + book?.balance}
+            </span>
+          </h1>
+        </div>
+      )}
 
       {
         expenses?.map(

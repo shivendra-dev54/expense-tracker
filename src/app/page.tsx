@@ -30,18 +30,11 @@ export default function Home() {
   }, [hasLoadedStore, router, user]);
 
 
-  if (!hasLoadedStore) {
+  if (!hasLoadedStore || user) {
     return (<div className="bg-slate-950 text-white flex justify-center align-middle flex-col flex-1 text-center">
       Loading your profile...
     </div>);
   }
-
-  if (user) {
-    return (<div className="bg-slate-950 text-white flex justify-center align-middle flex-col flex-1 text-center">
-      Loading your profile...
-    </div>);
-  }
-
 
   return (
     <div className="relative w-screen bg-slate-900 text-pink-100 text-center p-8 flex flex-col flex-1">
