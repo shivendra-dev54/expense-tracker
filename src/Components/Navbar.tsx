@@ -33,6 +33,7 @@ export const Navbar = () => {
     logout();
     successNotification("deleted account!");
     router.push("/");
+    setIsOpen(false);
   }
 
   useEffect(() => {
@@ -124,7 +125,7 @@ export const Navbar = () => {
                       </button>
 
                       <button
-                        className="text-red-300 underline mt-2"
+                        className="text-red-300 underline mt-2 cursor-pointer"
                         onClick={handleAccountDelete}
                       >
                         delete account

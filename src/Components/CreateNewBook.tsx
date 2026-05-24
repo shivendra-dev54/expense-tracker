@@ -1,18 +1,35 @@
 "use client";
 
+import { useAuthStore } from "@/Store/AuthStore";
+import { axiosRequestHandler } from "@/util/axiosRequestHandler";
 import { Dispatch, SetStateAction, useState } from "react";
 
 export const CreateNewBook = ({
-  setIsCreateModalOpen
+  setIsCreateModalOpen,
+  setNotebooks
 }: {
-  setIsCreateModalOpen: Dispatch<SetStateAction<boolean>>
+  setIsCreateModalOpen: Dispatch<SetStateAction<boolean>>,
+  setNotebooks: Dispatch<SetStateAction<any[]>>
 }) => {
 
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [ebName, setEbName] = useState<string>("");
 
+  const { logout } = useAuthStore();
+
   const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setIsLoading(true);
+    const resp = await axiosRequestHandler(
+      "/api/book",
+      "POST",
+      {
+        "name": ebName
+      },
+      logout
+    );
+    setNotebooks((e) => [...e, resp.data.data]);
+    setIsCreateModalOpen(false);
   }
 
   return (
@@ -44,8 +61,9 @@ export const CreateNewBook = ({
             type="submit"
             className={`inline-block pr-8 pl-8 p-2 rounded-4xl outline-none w-fit bg-slate-950 text-green-300
               ${((isLoading) ? ("cursor-not-allowed") : ("cursor-pointer"))}`}
+            disabled={isLoading}
           >
-            submit
+            {isLoading ? ("Loading...") : ("create")}
           </button>
 
           <button
@@ -54,10 +72,12 @@ export const CreateNewBook = ({
               e.preventDefault();
               setIsCreateModalOpen(false);
             }}
+            disabled={isLoading}
           >
             close
           </button>
         </div>
+
       </form>
     </div>
   );
