@@ -1,5 +1,5 @@
 import { ApiResponse } from "./ApiResponse";
-import { HandlableError } from "./customErrors";
+import { HandlableError, UnauthorizedError } from "./customErrors";
 
 export const errorHandlerWrap = (handler: Function) => {
   return async (req: Request, context: any) => {
@@ -11,7 +11,11 @@ export const errorHandlerWrap = (handler: Function) => {
       if (e instanceof HandlableError) {
         status_code = 499;
       }
-      // console.log(e);
+
+      if (e instanceof UnauthorizedError) {
+        status_code = 498
+      }
+
       const response: ApiResponse<null> = {
         status: false,
         status_code: status_code,

@@ -2,7 +2,7 @@
 
 import { Dispatch, SetStateAction } from "react";
 
-export const ConfirmModal = ({
+export const ConfirmModalForDeletion = ({
   msg,
   setIsOpen,
   callbackOnConfirm
@@ -19,7 +19,7 @@ export const ConfirmModal = ({
 
       <div className="flex justify-between items-center mt-8">
         <button
-          className="bg-slate-950 p-2 pl-6 pr-6 rounded-full text-red-400"
+          className="bg-slate-950 p-2 pl-6 pr-6 rounded-full text-red-400 cursor-pointer"
           onClick={async () => {
             setIsOpen(false);
             await callbackOnConfirm();
@@ -29,7 +29,7 @@ export const ConfirmModal = ({
         </button>
 
         <button
-          className="bg-slate-950 p-2 pl-6 pr-6 rounded-full text-green-400"
+          className="bg-slate-950 p-2 pl-6 pr-6 rounded-full text-green-400 cursor-pointer"
           onClick={() => setIsOpen(false)}
         >
           close

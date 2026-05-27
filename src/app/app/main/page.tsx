@@ -22,7 +22,7 @@ export default function AppPage() {
           logout
         );
 
-        const data = resp.data.data;
+        const data = resp?.data.data;
         setNotebooks((data as any[]).sort((a, b) => b._id.localeCompare(a._id)));
       }
       getNoteBookData();

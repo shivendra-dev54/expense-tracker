@@ -63,7 +63,7 @@ export const SignUpForm = () => {
         userData,
         logout
       );
-      setUser(resp_sign_in.data.data);
+      setUser(resp_sign_in?.data.data);
       router.push("/app/main");
     }
     catch (e: any) {

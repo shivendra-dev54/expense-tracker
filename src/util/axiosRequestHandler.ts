@@ -1,5 +1,4 @@
-import { useAuthStore } from "@/Store/AuthStore";
-import axios, { Method } from "axios";
+import axios, { AxiosError, Method } from "axios";
 
 export const axiosRequestHandler = async (
   url: string,
@@ -32,14 +31,15 @@ export const axiosRequestHandler = async (
       return response;
     }
     catch (er) {
-      await axios({
-        url: "/api/auth/logout",
-        method: "POST",
-        data: null
-      });
+      if ((er as AxiosError).response?.status === 498) {
+        await axios({
+          url: "/api/auth/logout",
+          method: "POST",
+          data: null
+        });
 
-      logout();
-      throw e;
+        logout();
+      }
     }
   }
 }

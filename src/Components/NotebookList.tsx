@@ -4,7 +4,8 @@ import { useAuthStore } from "@/Store/AuthStore";
 import { axiosRequestHandler } from "@/util/axiosRequestHandler";
 import { useRouter } from "next/navigation";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
-import { ConfirmModal } from "./ConfirmModal";
+import { ConfirmModalForDeletion } from "./ConfirmModalDeletion";
+import { ConfirmModalForUpdate } from "./ConfirmModalUpdation";
 
 export const NotebookList = ({ notebooks, setNotebooks, setIsLoading }: {
   notebooks: any[],
@@ -17,6 +18,9 @@ export const NotebookList = ({ notebooks, setNotebooks, setIsLoading }: {
   const [entrybooks, setEntrybooks] = useState<any[]>([]);
   const [waitingForUserInputForDelete, setWaitingForUserInputForDelete] = useState<boolean>(false);
   const [idForDelete, setIdForDelete] = useState<string | null>(null);
+  const [waitingForUserInputForUpdate, setWaitingForUserInputForUpdate] = useState<boolean>(false);
+  const [idForUpdate, setIdForUpdate] = useState<string | null>(null);
+  const [updatedName, setUpdatedName] = useState<string | null>(null);
 
   const router = useRouter();
   const { logout } = useAuthStore();
@@ -28,6 +32,7 @@ export const NotebookList = ({ notebooks, setNotebooks, setIsLoading }: {
     await setTimeout(() => { }, 1000);
 
     const id_of_book = (e.target as unknown as HTMLElement).id;
+    if (!id_of_book) return;
     router.push(`/app/book/${id_of_book}`);
   }
 
@@ -52,6 +57,44 @@ export const NotebookList = ({ notebooks, setNotebooks, setIsLoading }: {
     setIsLoading(false);
   }
 
+  const handleBookUpdate = async (id: string) => {
+    setIsDisabled(true);
+    setIsLoading(true);
+
+    if (!updatedName || updatedName?.length === 0) {
+      return;
+    }
+
+    const resp = await axiosRequestHandler(
+      `/api/book/${id}`,
+      "POST",
+      {
+        "name": updatedName
+      },
+      logout
+    );
+
+    setEntrybooks((e) => {
+      return e.map((eb) => {
+        if (eb._id === id) {
+          return resp?.data.data;
+        }
+        return eb;
+      });
+    });
+    setNotebooks((e) => {
+      return e.map((eb) => {
+        if (eb._id === id) {
+          return resp?.data.data;
+        }
+        return eb;
+      });
+    });
+
+    setIsDisabled(false);
+    setIsLoading(false);
+  }
+
 
   useEffect(() => {
     setEntrybooks(notebooks.sort((a, b) => b._id.localeCompare(a._id)));
@@ -61,7 +104,7 @@ export const NotebookList = ({ notebooks, setNotebooks, setIsLoading }: {
     <div className="flex flex-col justify-center items-center w-full p-2 gap-2">
       {waitingForUserInputForDelete && (
         <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 text-2xl text-white">
-          <ConfirmModal
+          <ConfirmModalForDeletion
             msg="Confirm Entrybook deletion."
             setIsOpen={setWaitingForUserInputForDelete}
             callbackOnConfirm={async () => {
@@ -71,6 +114,24 @@ export const NotebookList = ({ notebooks, setNotebooks, setIsLoading }: {
           />
         </div>
       )}
+
+
+      {waitingForUserInputForUpdate && (
+        <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 text-2xl text-white">
+          <ConfirmModalForUpdate
+            msg="Confirm Entrybook update."
+            setIsOpen={setWaitingForUserInputForUpdate}
+            callbackOnConfirm={async () => {
+              await handleBookUpdate(idForUpdate!);
+              setIdForUpdate(null);
+            }}
+            updatedName={updatedName}
+            setUpdatedName={setUpdatedName}
+          />
+        </div>
+      )}
+
+
       {
         entrybooks.map(
           (notebook) => {
@@ -96,7 +157,18 @@ export const NotebookList = ({ notebooks, setNotebooks, setIsLoading }: {
                   </span>
                 </span>
                 <div className={`flex justify-between pl-6 pr-6 ${notebook.name === "me" ? ("hidden") : ("")}`}>
-                  <button className="underline text-blue-200 cursor-pointer">
+                  <button
+                    className="underline text-blue-200 cursor-pointer"
+                    id={notebook._id}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      const id = (e.target as unknown as HTMLElement).id;
+                      setIdForUpdate(id);
+                      setWaitingForUserInputForUpdate(true);
+                      setUpdatedName(notebook.name);
+                    }}
+                  >
                     update
                   </button>
 
