@@ -80,7 +80,7 @@ export const ViewExpenseModal = (
           amount:
         </span>
         <span
-          className={"text-end" + (visibleExpense?.amount! < 0) ? ("text-red-400") : ("text-green-400")}
+          className={`text-end" + ${(visibleExpense?.amount! < 0) ? ("text-red-400") : ("text-green-400")}`}
         >
           {" " + visibleExpense?.amount}
         </span>
