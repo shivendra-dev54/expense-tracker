@@ -49,8 +49,7 @@ export const NotebookList = ({ notebooks, setNotebooks, setIsLoading }: {
 
     setEntrybooks(entrybooks.filter((e) => e._id !== id));
     setNotebooks((e) => {
-      e.filter((eb) => eb._id !== id);
-      return e;
+      return e.filter((eb) => eb._id !== id);
     });
 
     setIsDisabled(false);

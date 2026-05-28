@@ -28,7 +28,7 @@ export const CreateNewBook = ({
       },
       logout
     );
-    setNotebooks((e) => [...e, resp.data.data]);
+    setNotebooks((eb) => [...eb, resp?.data.data]);
     setIsCreateModalOpen(false);
   }
 
