@@ -90,7 +90,7 @@ export const ViewExpenseModal = (
         <span>
           msg:
         </span>
-        <span className="text-slate-300">
+        <span className="text-slate-300 text-lg text-end">
           {visibleExpense?.message}
         </span>
       </div>
