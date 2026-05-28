@@ -4,6 +4,7 @@ import { useAuthStore } from "@/Store/AuthStore";
 import { EntrybookType, ExpenseType } from "@/Types/ExpenseType";
 import { axiosRequestHandler } from "@/util/axiosRequestHandler";
 import { Dispatch, SetStateAction, useState } from "react";
+import { UpdateExpenseModal } from "./UpdateExpenseModal";
 
 export const ViewExpenseModal = (
   {
@@ -23,6 +24,7 @@ export const ViewExpenseModal = (
   const { logout } = useAuthStore();
 
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isUpdating, setIsUpdating] = useState<boolean>(false);
 
   const handleDelete = async () => {
 
@@ -62,6 +64,22 @@ export const ViewExpenseModal = (
     <div
       className="flex flex-col p-8 bg-slate-800 rounded-2xl gap-1 min-w-84 text-slate-400"
     >
+
+      {
+        isUpdating && (
+          <div
+            className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 text-2xl text-white"
+          >
+            <UpdateExpenseModal
+              setIsUpdating={setIsUpdating}
+              visibleExpense={visibleExpense}
+              setExpenses={setExpenses}
+              setVisibleExpense={setVisibleExpense}
+              setBook={setBook}
+            />
+          </div>
+        )}
+
       {isLoading && (
         <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 text-2xl text-white">
           Loading...
@@ -129,6 +147,10 @@ export const ViewExpenseModal = (
       >
         <button
           className="self-center cursor-pointer text-green-300 bg-slate-950 p-2 rounded-full"
+          onClick={(e) => {
+            e.preventDefault();
+            setIsUpdating(true);
+          }}
         >
           <svg fill="#aaffaa" version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink" width="32px" height="32px" viewBox="0 0 420.827 420.827" xmlSpace="preserve" stroke="#aaffaa">
             <g id="SVGRepo_bgCarrier" strokeWidth="0">
