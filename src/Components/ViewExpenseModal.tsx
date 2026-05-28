@@ -1,23 +1,72 @@
 "use client";
 
-import { ExpenseType } from "@/Types/ExpenseType";
-import { Dispatch, SetStateAction } from "react";
+import { useAuthStore } from "@/Store/AuthStore";
+import { EntrybookType, ExpenseType } from "@/Types/ExpenseType";
+import { axiosRequestHandler } from "@/util/axiosRequestHandler";
+import { Dispatch, SetStateAction, useState } from "react";
 
 export const ViewExpenseModal = (
   {
     visibleExpense,
     setVisibleExpense,
-    setIsExpenseViewOpen
+    setIsExpenseViewOpen,
+    setExpenses,
+    setBook
   }: {
     visibleExpense: ExpenseType | null,
     setVisibleExpense: Dispatch<SetStateAction<ExpenseType | null>>,
-    setIsExpenseViewOpen: Dispatch<SetStateAction<boolean>>
+    setIsExpenseViewOpen: Dispatch<SetStateAction<boolean>>,
+    setExpenses: Dispatch<SetStateAction<any[]>>,
+    setBook: Dispatch<SetStateAction<EntrybookType | null>>
   }
 ) => {
+  const { logout } = useAuthStore();
+
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+
+  const handleDelete = async () => {
+
+    const id = visibleExpense?._id;
+
+    if (!id) {
+      return;
+    }
+
+    setIsLoading(true);
+    await axiosRequestHandler(
+      `/api/expense/${id}`,
+      "DELETE",
+      null,
+      logout
+    );
+
+    setExpenses((e) => {
+      return e.filter((exp) => {
+        return exp._id !== id;
+      });
+    });
+
+    setBook((book) => {
+      return {
+        ...book,
+        balance: (book?.balance! - visibleExpense.amount)
+      } as EntrybookType;
+    });
+
+    setIsLoading(false);
+    setIsExpenseViewOpen(false);
+  }
+
+
   return (
     <div
       className="flex flex-col p-8 bg-slate-800 rounded-2xl gap-1 min-w-84 text-slate-400"
     >
+      {isLoading && (
+        <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 text-2xl text-white">
+          Loading...
+        </div>
+      )}
       <h1
         className="text-center text-3xl font-bold mb-4 text-slate-100"
       >
@@ -100,6 +149,10 @@ export const ViewExpenseModal = (
 
         <button
           className="self-center cursor-pointer text-green-300 bg-slate-950 p-2 rounded-full"
+          onClick={(e) => {
+            e.preventDefault();
+            handleDelete();
+          }}
         >
           <svg fill="#ff8888" width="32px" height="32px" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" stroke="#ff8888">
             <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>

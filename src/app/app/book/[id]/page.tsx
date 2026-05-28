@@ -94,6 +94,8 @@ export default function BookPage() {
             visibleExpense={visibleExpense}
             setVisibleExpense={setVisibleExpense}
             setIsExpenseViewOpen={setIsExpenseViewOpen}
+            setExpenses={setExpenses}
+            setBook={setBook}
           />
         </div>
       )}
@@ -120,7 +122,7 @@ export default function BookPage() {
                 <p>
                   msg:
                   <span
-                  className="text-slate-300"
+                    className="text-slate-300"
                   >
                     {e.message}
                   </span>
