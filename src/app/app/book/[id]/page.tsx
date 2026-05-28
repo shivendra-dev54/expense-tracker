@@ -1,6 +1,7 @@
 "use client";
 
 import { CreateExpenseModal } from "@/Components/CreateExpenseModal";
+import { ViewExpenseModal } from "@/Components/ViewExpenseModal";
 import { useAuthStore } from "@/Store/AuthStore";
 import { EntrybookType, ExpenseType } from "@/Types/ExpenseType";
 import { axiosRequestHandler } from "@/util/axiosRequestHandler";
@@ -45,6 +46,7 @@ export default function BookPage() {
             Loading...
           </div>
         )}
+
       {book?.name && (
         <div className="mb-4 self-center text-center font-bold mt-4">
           <h1 className="text-3xl">
@@ -84,6 +86,18 @@ export default function BookPage() {
         </div>
       )}
 
+      {isExpenseViewOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 text-2xl text-white"
+        >
+          <ViewExpenseModal
+            visibleExpense={visibleExpense}
+            setVisibleExpense={setVisibleExpense}
+            setIsExpenseViewOpen={setIsExpenseViewOpen}
+          />
+        </div>
+      )}
+
       {
         expenses?.map(
           (e) => {
@@ -91,7 +105,7 @@ export default function BookPage() {
               <div
                 key={e._id}
                 id={e._id}
-                className="ml-2 mb-2 mr-2 bg-slate-800 p-3 rounded-2xl md:self-center md:w-1/2 md:text-lg"
+                className="ml-2 mb-2 mr-2 bg-slate-800 p-3 rounded-2xl md:self-center md:w-1/2 md:text-lg overflow-hidden"
                 onClick={(evnt) => {
                   evnt.preventDefault();
                   setVisibleExpense({
@@ -104,7 +118,12 @@ export default function BookPage() {
                 }}
               >
                 <p>
-                  msg: {e.message}
+                  msg:
+                  <span
+                  className="text-slate-300"
+                  >
+                    {e.message}
+                  </span>
                 </p>
                 <p>
                   amt: <span className={`  ${(e.amount < 0) ? ("text-red-400") : ("text-green-400")}`}>{e.amount}</span>
