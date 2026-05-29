@@ -16,6 +16,9 @@ export const Navbar = () => {
   const [isMounted, setIsMounted] = useState<boolean>(false);
 
   const handleAccountDelete = async () => {
+    const userInput = confirm("confirm delete ?");
+    if (!userInput) return;
+
     await axiosRequestHandler(
       "/api/user",
       "DELETE",
