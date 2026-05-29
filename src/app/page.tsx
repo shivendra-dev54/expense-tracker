@@ -47,6 +47,18 @@ export default function Home() {
         <br />
         There isn't too much in this app that I can put here.
       </p>
+
+      <div
+        className="my-8"
+      >
+        Built by <a
+          href="https://github.com/shivendra-dev54"
+          className="text-green-500 underline"
+        >
+          shivendra devadhe
+        </a>
+      </div>
+
       <div className="absolute bottom-16 left-0 right-0">
         <button
           className=" p-2 pl-8 pr-8 bg-green-500 text-black font-extrabold text-xl border-2 rounded-4xl cursor-pointer"

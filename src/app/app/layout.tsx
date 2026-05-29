@@ -9,7 +9,7 @@ export default function AuthGuard(
 ) {
   const router = useRouter();
   const [hasLoadedStore, setHasLoadedStore] = useState(false);
-  const { user } = useAuthStore();
+  const { user, logout } = useAuthStore();
 
   useEffect(() => {
     const unsubHydrate = useAuthStore.persist.onHydrate(() => setHasLoadedStore(false));
@@ -27,7 +27,8 @@ export default function AuthGuard(
   useEffect(() => {
     if (!hasLoadedStore) return;
     if (!user) {
-      router.push("/auth")
+      logout();
+      router.push("/auth");
     }
   }, [hasLoadedStore, router, user]);
 
