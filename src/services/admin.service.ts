@@ -17,6 +17,9 @@ export const getAdminAccessService = async (
     throw new InvalidDataError();
   }
 
+  const already_admin = await Admin.findOne({ user_id });
+  if (already_admin) return already_admin;
+
   const new_admin: IAdmin = {
     user_id
   };

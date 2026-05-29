@@ -16,7 +16,7 @@ export const POST = errorHandlerWrap(async (request: Request) => {
   const resp: ApiResponse<null> = {
     status: true,
     status_code: 200,
-    message: "admin access grated.",
+    message: "admin access granted.",
     data: null
   }
   return Response.json(resp, { status: 200 });
@@ -25,7 +25,7 @@ export const POST = errorHandlerWrap(async (request: Request) => {
 
 export const GET = errorHandlerWrap(async (request: Request) => {
   const user_id = request.headers.get("x-user-id") as unknown as Types.ObjectId;
-  const user_list = getAllUserListService(user_id);
+  const user_list = await getAllUserListService(user_id);
   const resp: ApiResponse<any> = {
     status: true,
     status_code: 200,
