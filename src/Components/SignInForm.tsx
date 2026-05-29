@@ -54,7 +54,7 @@ export const SignInForm = () => {
         userData,
         logout
       );
-      const user_data = resp.data.data;
+      const user_data = resp!.data.data;
       setUser(user_data);
       router.push("/app/main");
     }
