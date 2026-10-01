@@ -1,0 +1,20 @@
+services:
+  mongodb:
+    image: mongo:8
+    container_name: mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./data/mongodb:/data/db
+
+  expense-tracker:
+    image: shivendrad54/expense-tracker:latest
+    container_name: expense-tracker
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    depends_on:
+      - mongodb
