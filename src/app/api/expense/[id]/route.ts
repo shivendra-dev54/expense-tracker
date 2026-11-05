@@ -1,4 +1,4 @@
-import { deleteExpenseService, updateExpenseAmountService, updateExpenseMessageService } from "@/services/expense.service";
+import { deleteExpenseService, updateExpenseService } from "@/services/expense.service";
 import { ApiResponse } from "@/util/ApiResponse";
 import { InvalidDataError } from "@/util/customErrors";
 import { errorHandlerWrap } from "@/util/errorHandlerWrap";
@@ -10,42 +10,47 @@ export type RouteParams = {
 
 export const POST = errorHandlerWrap(async (request: Request, { params }: RouteParams) => {
   const id = (await params).id as unknown as Types.ObjectId;
-  const {
-    amount,
-    message
-  } = await request.json();
+
+  const body = await request.json();
+
   const user_id = request.headers.get("x-user-id") as unknown as Types.ObjectId;
 
-  if (!amount && !message) {
+  const updates: {
+    amount?: number;
+    message?: string;
+    expense_date?: Date;
+  } = {};
+
+  if (body.amount !== undefined) {
+    updates.amount = Number(body.amount);
+  }
+
+  if (body.message !== undefined) {
+    updates.message = body.message;
+  }
+
+  if (body.expense_date !== undefined) {
+    updates.expense_date = new Date(body.expense_date);
+  }
+
+  if (Object.keys(updates).length === 0) {
     throw new InvalidDataError();
   }
 
-  let updated_exp;
-  if (amount) {
-    updated_exp = await updateExpenseAmountService(
-      user_id,
-      id,
-      amount
-    );
-  }
-  if (message) {
-    updated_exp = await updateExpenseMessageService(
-      user_id,
-      id,
-      message
-    );
-  }
+  const updated_exp = await updateExpenseService(
+    user_id,
+    id,
+    updates
+  );
 
   const resp: ApiResponse<any> = {
     status: true,
     status_code: 200,
-    message: "updated expenese successfully.",
+    message: "updated expense successfully.",
     data: updated_exp
   };
-  return Response.json(
-    resp,
-    { status: 200 }
-  );
+
+  return Response.json(resp, { status: 200 });
 });
 
 export const DELETE = errorHandlerWrap(async (request: Request, { params }: RouteParams) => {

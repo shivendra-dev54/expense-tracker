@@ -5,6 +5,7 @@ export interface IExpense {
   entrybook_id: Types.ObjectId;
   message: string;
   amount: number;
+  expense_date: Date;
 }
 
 const ExpenseSchema = new Schema<IExpense>(
@@ -12,12 +13,12 @@ const ExpenseSchema = new Schema<IExpense>(
     user_id: {
       type: Schema.Types.ObjectId,
       ref: "User",
-      allowNull: false
+      required: true
     },
     entrybook_id: {
       type: Schema.Types.ObjectId,
       ref: "EntryBook",
-      allowNull: false
+      required: true
     },
     message: {
       type: String,
@@ -26,7 +27,12 @@ const ExpenseSchema = new Schema<IExpense>(
     amount: {
       type: Number,
       default: 0,
-      allowNull: false,
+      required: true,
+    },
+    expense_date: {
+      type: Date,
+      required: true,
+      default: Date.now
     }
   },
   {

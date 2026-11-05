@@ -86,7 +86,8 @@
       {
         "book_id": "some_id",
         "amount": 10,
-        "message": "purchsed a pen."
+        "message": "purchsed a pen.",
+        "expense_date": "2026-11-05T00:00:00.000Z"
       }
       ```
   - read
