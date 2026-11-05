@@ -7,6 +7,7 @@ export interface EntrybookType {
 export interface ExpenseType {
   amount: number;
   message: string;
-  createdAt: Date;
+  expense_date: Date | string;
+  createdAt: Date | string;
   _id: string;
 }

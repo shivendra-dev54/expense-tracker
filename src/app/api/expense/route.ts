@@ -5,19 +5,24 @@ import { Types } from "mongoose";
 
 export const POST = errorHandlerWrap(async (request: Request) => {
   const body = await request.json();
+
   const user_id = request.headers.get("x-user-id") as unknown as Types.ObjectId;
+
   const new_exp = await createExpenseService(
-    user_id!,
+    user_id,
     body.book_id,
     body.amount,
-    body.message
+    body.message,
+    new Date(body.expense_date)
   );
+
   const resp: ApiResponse<any> = {
     status: true,
     status_code: 200,
     message: "created new expense successfully.",
     data: new_exp
-  }
+  };
+
   return Response.json(resp, { status: 200 });
 });
 

@@ -9,33 +9,40 @@ export const createExpenseService = async (
   user_id: Types.ObjectId,
   book_id: string,
   amount: number,
-  message: string
+  message: string,
+  expense_date: Date
 ) => {
-  if ((!book_id && !amount) || amount === 0.0) {
+  if (!book_id || !Number.isFinite(amount) || amount === 0 || !expense_date || isNaN(expense_date.getTime())) {
     throw new InvalidDataError();
   }
 
   await dbConnect();
+
   const session = await mongoose.startSession();
+
   let new_exp;
+
   try {
     await session.withTransaction(async () => {
-      // check if book exist and owned by user
-      const book = await EntryBook.findOne({ "_id": book_id, user_id }).session(session);
+      const book = await EntryBook.findOne({
+        _id: book_id,
+        user_id
+      }).session(session);
+
       if (!book) {
         throw new NotFoundError();
       }
 
-      // create new expense
       const data: IExpense = {
         entrybook_id: book._id,
         user_id,
         amount,
-        message
+        message,
+        expense_date
       };
+
       [new_exp] = await Expense.create([data], { session });
 
-      // update the balance in book
       book.balance += amount;
       await book.save({ session });
     });
@@ -43,8 +50,9 @@ export const createExpenseService = async (
   finally {
     await session.endSession();
   }
+
   return new_exp;
-}
+};
 
 
 // desc: this will read all the expenses in a book and will return it
@@ -75,66 +83,74 @@ export const readExpenseService = async (
 
 
 // desc: this func will update a certain expense
-export const updateExpenseMessageService = async (
+export const updateExpenseService = async (
   user_id: Types.ObjectId,
   expense_id: Types.ObjectId,
-  message: string
-) => {
-  await dbConnect();
-  const expense = await Expense.findOne({
-    user_id,
-    _id: expense_id
-  });
-
-  if (!expense) {
-    throw new NotFoundError();
+  updates: {
+    amount?: number;
+    message?: string;
+    expense_date?: Date;
   }
-
-  expense.message = message;
-  await expense.save();
-
-  return expense;
-}
-
-
-// desc: this func will update the amount of expense
-export const updateExpenseAmountService = async (
-  user_id: Types.ObjectId,
-  expense_id: Types.ObjectId,
-  new_amount: number
 ) => {
   await dbConnect();
 
   const session = await mongoose.startSession();
 
-  let expense;
+  let updated_exp;
+
   try {
     await session.withTransaction(async () => {
-      expense = await Expense.findOne({
+      const expense = await Expense.findOne({
         user_id,
         _id: expense_id
-      });
+      }).session(session);
 
       if (!expense) {
         throw new NotFoundError();
       }
-      const old_amt: number = expense.amount;
-      expense.amount = new_amount;
-      await expense.save();
 
+      // Update balance only if amount changes
+      if (updates.amount !== undefined) {
+        if (!Number.isFinite(updates.amount) || updates.amount === 0) {
+          throw new InvalidDataError();
+        }
 
-      // balance update
-      const book = await EntryBook.findById(expense.entrybook_id);
-      book.balance -= old_amt;
-      book.balance += new_amount;
-      await book.save();
+        const book = await EntryBook.findOne({
+          _id: expense.entrybook_id,
+          user_id
+        }).session(session);
+
+        if (!book) {
+          throw new NotFoundError();
+        }
+
+        book.balance += updates.amount - expense.amount;
+        await book.save({ session });
+
+        expense.amount = updates.amount;
+      }
+
+      if (updates.message !== undefined) {
+        expense.message = updates.message;
+      }
+
+      if (updates.expense_date !== undefined) {
+        if (isNaN(updates.expense_date.getTime())) {
+          throw new InvalidDataError();
+        }
+
+        expense.expense_date = updates.expense_date;
+      }
+
+      updated_exp = await expense.save({ session });
     });
   }
   finally {
     await session.endSession();
   }
-  return expense;
-}
+
+  return updated_exp;
+};
 
 
 export const deleteExpenseService = async (

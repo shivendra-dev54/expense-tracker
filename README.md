@@ -120,6 +120,9 @@ The project includes a set of REST API endpoints for authentication, books, expe
 
 For detailed request and response examples, see [api.readme.md](api.readme.md).
 
+![api and frontend structure](eta.png)
+
+
 ## Main Modules
 
 ### Authentication
