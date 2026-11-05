@@ -23,7 +23,9 @@ export default function AppPage() {
         );
 
         const data = resp?.data.data;
-        setNotebooks((data as any[]).sort((a, b) => b._id.localeCompare(a._id)));
+        if (data) {
+          setNotebooks((data as any[]).sort((a, b) => b._id.localeCompare(a._id)));
+        }
       }
       getNoteBookData();
     },

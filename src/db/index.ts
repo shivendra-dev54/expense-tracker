@@ -22,11 +22,15 @@ export const dbConnect = async () => {
     ).then((m) => m.connection);
   }
   try {
+    console.log("connecting to database...");
     cached.conn = await cached.promise;
     console.log("connected to database...");
     return cached.conn;
   }
   catch (e: any) {
+    console.log("connection to the database failed...")
+
+    console.log("\n\n\n\n\n", e, "\n\n\n\n\n")
     cached.promise = null;
     cached.conn = null;
     throw new DbConnectionError();
