@@ -75,6 +75,11 @@ export default function BookPage() {
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
   const [bulkDeleteError, setBulkDeleteError] = useState("");
 
+
+  // Book clear states
+  const [isClearingBook, setIsClearingBook] = useState(false);
+  const [clearBookError, setClearBookError] = useState("");
+
   const inputClass =
     "w-full bg-slate-950 text-white p-3 rounded-xl outline-none border border-slate-700 focus:border-green-400";
 
@@ -328,9 +333,9 @@ export default function BookPage() {
       setBook((prev) =>
         prev
           ? {
-              ...prev,
-              balance: result.balance
-            }
+            ...prev,
+            balance: result.balance
+          }
           : prev
       );
 
@@ -343,6 +348,68 @@ export default function BookPage() {
       );
     } finally {
       setIsBulkDeleting(false);
+    }
+  };
+
+  // book clear handler
+  const handleClearBook = async () => {
+    if (expenses.length === 0 || isClearingBook) return;
+
+    const count = expenses.length;
+
+    const confirmed = window.confirm(
+      `Are you sure you want to permanently delete all ${count} transactions from "${book?.name}"? The book itself will not be deleted. This action cannot be undone.`
+    );
+
+    if (!confirmed) return;
+
+    setIsClearingBook(true);
+    setClearBookError("");
+
+    try {
+      const resp = await axiosRequestHandler(
+        "/api/expense/bulk",
+        "DELETE",
+        {
+          book_id: id,
+          expense_ids: expenses.map((expense) => expense._id),
+        },
+        logout
+      );
+
+      const result = resp?.data.data as BulkDeleteResponse | undefined;
+
+      if (
+        !result ||
+        !Array.isArray(result.deleted_ids) ||
+        typeof result.balance !== "number"
+      ) {
+        throw new Error("Invalid clear book response.");
+      }
+
+      const deletedIds = new Set(result.deleted_ids);
+
+      setExpenses((prev) =>
+        prev.filter((expense) => !deletedIds.has(expense._id))
+      );
+
+      setBook((prev) =>
+        prev
+          ? {
+            ...prev,
+            balance: result.balance,
+          }
+          : prev
+      );
+
+      setSelectedExpenseIds(new Set());
+      setIsSelectionMode(false);
+      setBulkDeleteError("");
+    } catch (error) {
+      console.error("Clear book failed:", error);
+      setClearBookError("Unable to clear this book. Please try again.");
+    } finally {
+      setIsClearingBook(false);
     }
   };
 
@@ -370,12 +437,28 @@ export default function BookPage() {
           </h1>
 
           <div className="flex flex-col mt-4">
-            <button
-              className="p-2 rounded-full self-center cursor-pointer bg-green-500 text-black pl-4 pr-4"
-              onClick={() => setIsCreateExpenseModalOpen(true)}
-            >
-              create new
-            </button>
+            <div className="flex flex-wrap justify-center gap-3 mt-4">
+              <button
+                className="p-2 rounded-full cursor-pointer bg-green-500 text-black px-4 disabled:opacity-50"
+                onClick={() => setIsCreateExpenseModalOpen(true)}
+              >
+                Create New
+              </button>
+
+              <button
+                className="p-2 rounded-full cursor-pointer bg-red-500 text-white px-4 disabled:opacity-50"
+                onClick={handleClearBook}
+                disabled={expenses.length === 0 || isClearingBook || isBulkDeleting}
+              >
+                {isClearingBook ? "Clearing..." : "Clear Book"}
+              </button>
+            </div>
+
+            {clearBookError && (
+              <p className="text-red-400 text-sm mt-2">
+                {clearBookError}
+              </p>
+            )}
           </div>
 
         </div>
@@ -427,11 +510,10 @@ export default function BookPage() {
                 type="button"
                 onClick={toggleSelectionMode}
                 disabled={isBulkDeleting}
-                className={`px-4 py-2 rounded-full cursor-pointer transition-colors whitespace-nowrap disabled:opacity-50 ${
-                  isSelectionMode
-                    ? "bg-red-500 text-white"
-                    : "bg-slate-950 text-green-400 hover:bg-slate-700"
-                }`}
+                className={`px-4 py-2 rounded-full cursor-pointer transition-colors whitespace-nowrap disabled:opacity-50 ${isSelectionMode
+                  ? "bg-red-500 text-white"
+                  : "bg-slate-950 text-green-400 hover:bg-slate-700"
+                  }`}
               >
                 {isSelectionMode ? "Cancel selection" : "Select"}
               </button>
@@ -680,13 +762,11 @@ export default function BookPage() {
             <div
               key={e._id}
               id={e._id}
-              className={`ml-2 mb-2 mr-2 bg-slate-800 p-3 rounded-2xl md:self-center md:w-1/2 md:text-lg overflow-hidden transition-colors ${
-                isSelectionMode
-                  ? "cursor-pointer hover:bg-slate-700"
-                  : "cursor-pointer hover:bg-slate-700"
-              } ${
-                isSelected ? "border-2 border-green-400" : "border-2 border-transparent"
-              }`}
+              className={`ml-2 mb-2 mr-2 bg-slate-800 p-3 rounded-2xl md:self-center md:w-1/2 md:text-lg overflow-hidden transition-colors ${isSelectionMode
+                ? "cursor-pointer hover:bg-slate-700"
+                : "cursor-pointer hover:bg-slate-700"
+                } ${isSelected ? "border-2 border-green-400" : "border-2 border-transparent"
+                }`}
               onClick={() => {
                 if (isSelectionMode) {
                   toggleExpenseSelection(e._id);
