@@ -1,5 +1,8 @@
 "use client";
 
+import BookHeader from "@/Components/book/BookHeader";
+import BulkSelectionControls from "@/Components/book/BulkSelectionControls";
+import TransactionList from "@/Components/book/TransactionList";
 import { CreateExpenseModal } from "@/Components/CreateExpenseModal";
 import { ViewExpenseModal } from "@/Components/ViewExpenseModal";
 import { useAuthStore } from "@/Store/AuthStore";
@@ -423,45 +426,13 @@ export default function BookPage() {
       )}
 
       {book?.name && (
-        <div className="mb-4 self-center text-center font-bold mt-4">
-
-          <h1 className="text-3xl">
-            {book.name}
-          </h1>
-
-          <h1 className="text-slate-400">
-            bal:
-            <span className={book.balance < 0 ? "text-red-400" : "text-green-400"}>
-              {" " + book.balance}
-            </span>
-          </h1>
-
-          <div className="flex flex-col mt-4">
-            <div className="flex flex-wrap justify-center gap-3 mt-4">
-              <button
-                className="p-2 rounded-full cursor-pointer bg-green-500 text-black px-4 disabled:opacity-50"
-                onClick={() => setIsCreateExpenseModalOpen(true)}
-              >
-                Create New
-              </button>
-
-              <button
-                className="p-2 rounded-full cursor-pointer bg-red-500 text-white px-4 disabled:opacity-50"
-                onClick={handleClearBook}
-                disabled={expenses.length === 0 || isClearingBook || isBulkDeleting}
-              >
-                {isClearingBook ? "Clearing..." : "Clear Book"}
-              </button>
-            </div>
-
-            {clearBookError && (
-              <p className="text-red-400 text-sm mt-2">
-                {clearBookError}
-              </p>
-            )}
-          </div>
-
-        </div>
+        <BookHeader
+          book={book}
+          expenseCount={expenses.length}
+          isClearingBook={isClearingBook}
+          onCreateExpense={() => setIsCreateExpenseModalOpen(true)}
+          onClearBook={handleClearBook}
+        />
       )}
 
       {/* Create Expense Modal */}
@@ -531,49 +502,15 @@ export default function BookPage() {
 
           {/* Bulk Selection Controls */}
           {isSelectionMode && (
-            <div className="mt-4 p-3 bg-slate-900 rounded-xl">
-
-              <div className="flex justify-between items-center gap-2 flex-wrap">
-
-                <div>
-                  <p className="font-semibold">
-                    {selectedExpenseIds.size} selected
-                  </p>
-
-                  <p className="text-xs text-slate-400">
-                    Select transactions from the currently displayed results.
-                  </p>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={toggleSelectAllVisible}
-                  disabled={filteredExpenses.length === 0 || isBulkDeleting}
-                  className="text-sm text-green-400 hover:text-green-300 cursor-pointer disabled:text-slate-600 disabled:cursor-not-allowed"
-                >
-                  {allVisibleSelected ? "Deselect visible" : "Select all visible"}
-                </button>
-
-              </div>
-
-              <button
-                type="button"
-                onClick={handleBulkDelete}
-                disabled={selectedExpenseIds.size === 0 || isBulkDeleting}
-                className="w-full mt-3 p-3 rounded-xl bg-red-500 text-white font-semibold hover:bg-red-600 transition-colors disabled:bg-slate-700 disabled:text-slate-400 disabled:cursor-not-allowed"
-              >
-                {isBulkDeleting
-                  ? "Deleting..."
-                  : `Delete Selected (${selectedExpenseIds.size})`}
-              </button>
-
-              {bulkDeleteError && (
-                <p className="text-red-400 text-sm mt-2 text-center">
-                  {bulkDeleteError}
-                </p>
-              )}
-
-            </div>
+            <BulkSelectionControls
+              selectedCount={selectedExpenseIds.size}
+              visibleCount={filteredExpenses.length}
+              allVisibleSelected={allVisibleSelected}
+              isBulkDeleting={isBulkDeleting}
+              error={bulkDeleteError}
+              onSelectAll={toggleSelectAllVisible}
+              onDelete={handleBulkDelete}
+            />
           )}
 
           {isFiltersOpen && (
@@ -745,92 +682,18 @@ export default function BookPage() {
       )}
 
       {/* Transaction List */}
-      <div className="flex flex-col">
-
-        {filteredExpenses.length === 0 && book?.name && (
-          <div className="text-center text-slate-400 p-8">
-            {expenses.length === 0
-              ? "No transactions yet. Create your first transaction."
-              : "No transactions match your search or filters."}
-          </div>
-        )}
-
-        {filteredExpenses.map((e) => {
-          const isSelected = selectedExpenseIds.has(e._id);
-
-          return (
-            <div
-              key={e._id}
-              id={e._id}
-              className={`ml-2 mb-2 mr-2 bg-slate-800 p-3 rounded-2xl md:self-center md:w-1/2 md:text-lg overflow-hidden transition-colors ${isSelectionMode
-                ? "cursor-pointer hover:bg-slate-700"
-                : "cursor-pointer hover:bg-slate-700"
-                } ${isSelected ? "border-2 border-green-400" : "border-2 border-transparent"
-                }`}
-              onClick={() => {
-                if (isSelectionMode) {
-                  toggleExpenseSelection(e._id);
-                  return;
-                }
-
-                setVisibleExpense(e);
-                setIsExpenseViewOpen(true);
-              }}
-            >
-
-              <div className="flex items-start gap-3">
-
-                {isSelectionMode && (
-                  <input
-                    type="checkbox"
-                    checked={isSelected}
-                    onChange={() => toggleExpenseSelection(e._id)}
-                    onClick={(event) => event.stopPropagation()}
-                    className="mt-1 w-5 h-5 accent-green-400 cursor-pointer shrink-0"
-                    aria-label={`Select transaction ${e.message || e._id}`}
-                  />
-                )}
-
-                <div className="flex-1 min-w-0">
-
-                  <p>
-                    msg:
-                    <span className="text-slate-300">
-                      {" " + (e.message || "No description")}
-                    </span>
-                  </p>
-
-                  <p>
-                    amt:
-                    <span className={e.amount < 0 ? "text-red-400" : "text-green-400"}>
-                      {" " + e.amount}
-                    </span>
-                  </p>
-
-                  <p>
-                    date:
-                    {" " + (
-                      e.expense_date
-                        ? getDateKey(e.expense_date)
-                        : "N/A"
-                    )}
-                  </p>
-
-                </div>
-
-                {isSelected && isSelectionMode && (
-                  <span className="text-green-400 text-sm font-semibold shrink-0">
-                    Selected
-                  </span>
-                )}
-
-              </div>
-
-            </div>
-          );
-        })}
-
-      </div>
+      <TransactionList
+        expenses={filteredExpenses}
+        isSelectionMode={isSelectionMode}
+        selectedExpenseIds={selectedExpenseIds}
+        onToggleSelection={toggleExpenseSelection}
+        onViewExpense={(expense) => {
+          setVisibleExpense(expense);
+          setIsExpenseViewOpen(true);
+        }}
+        getDateKey={getDateKey}
+        hasTransactions={expenses.length > 0}
+      />
 
     </div>
   );
