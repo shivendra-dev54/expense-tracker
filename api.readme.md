@@ -111,6 +111,20 @@
       ```json
       {}
       ```
+  
+  - bulk delete
+    - path = DELETE /api/expense/bulk
+    - body = 
+      ```json
+        {
+        "book_id": "BOOK_ID",
+        "expense_ids": [
+            "EXPENSE_ID_1",
+            "EXPENSE_ID_2",
+            "EXPENSE_ID_3"
+          ]
+        }
+      ```
 
 - **admin routes:**
   - get acess

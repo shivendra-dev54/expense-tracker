@@ -11,6 +11,12 @@ import { useEffect, useMemo, useState } from "react";
 type TransactionType = "all" | "deposit" | "withdrawal";
 type DateFilter = "all" | "today" | "7days" | "30days" | "custom";
 
+type BulkDeleteResponse = {
+  deleted_count: number;
+  deleted_ids: string[];
+  balance: number;
+};
+
 const getToday = () => {
   const date = new Date();
 
@@ -61,11 +67,22 @@ export default function BookPage() {
   const [minAmount, setMinAmount] = useState("");
   const [maxAmount, setMaxAmount] = useState("");
 
+  // Bulk selection states
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [selectedExpenseIds, setSelectedExpenseIds] = useState<Set<string>>(
+    new Set()
+  );
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+  const [bulkDeleteError, setBulkDeleteError] = useState("");
+
   const inputClass =
     "w-full bg-slate-950 text-white p-3 rounded-xl outline-none border border-slate-700 focus:border-green-400";
 
   useEffect(() => {
     setIsFiltersOpen(false);
+    setIsSelectionMode(false);
+    setSelectedExpenseIds(new Set());
+    setBulkDeleteError("");
   }, [id]);
 
   useEffect(() => {
@@ -215,6 +232,120 @@ export default function BookPage() {
     minAmount !== "" ||
     maxAmount !== "";
 
+  // Bulk selection handlers
+  const toggleSelectionMode = () => {
+    if (isSelectionMode) {
+      setSelectedExpenseIds(new Set());
+      setBulkDeleteError("");
+    }
+
+    setIsSelectionMode((prev) => !prev);
+  };
+
+  const toggleExpenseSelection = (expenseId: string) => {
+    setSelectedExpenseIds((prev) => {
+      const updated = new Set(prev);
+
+      if (updated.has(expenseId)) {
+        updated.delete(expenseId);
+      } else {
+        updated.add(expenseId);
+      }
+
+      return updated;
+    });
+
+    setBulkDeleteError("");
+  };
+
+  const visibleExpenseIds = filteredExpenses.map((expense) => expense._id);
+
+  const allVisibleSelected =
+    visibleExpenseIds.length > 0 &&
+    visibleExpenseIds.every((expenseId) =>
+      selectedExpenseIds.has(expenseId)
+    );
+
+  const toggleSelectAllVisible = () => {
+    setSelectedExpenseIds((prev) => {
+      const updated = new Set(prev);
+
+      if (allVisibleSelected) {
+        visibleExpenseIds.forEach((expenseId) => updated.delete(expenseId));
+      } else {
+        visibleExpenseIds.forEach((expenseId) => updated.add(expenseId));
+      }
+
+      return updated;
+    });
+
+    setBulkDeleteError("");
+  };
+
+  // Bulk delete handler
+  const handleBulkDelete = async () => {
+    if (selectedExpenseIds.size === 0 || isBulkDeleting) return;
+
+    const count = selectedExpenseIds.size;
+
+    const confirmed = window.confirm(
+      `Are you sure you want to permanently delete ${count} selected transaction${count === 1 ? "" : "s"}? This action cannot be undone.`
+    );
+
+    if (!confirmed) return;
+
+    setIsBulkDeleting(true);
+    setBulkDeleteError("");
+
+    try {
+      const resp = await axiosRequestHandler(
+        "/api/expense/bulk",
+        "DELETE",
+        {
+          book_id: id,
+          expense_ids: Array.from(selectedExpenseIds)
+        },
+        logout
+      );
+
+      const result = resp?.data.data as BulkDeleteResponse | undefined;
+
+      if (
+        !result ||
+        !Array.isArray(result.deleted_ids) ||
+        typeof result.balance !== "number"
+      ) {
+        throw new Error("Invalid bulk delete response.");
+      }
+
+      const deletedIds = new Set(result.deleted_ids);
+
+      setExpenses((prev) =>
+        prev.filter((expense) => !deletedIds.has(expense._id))
+      );
+
+      // Use the balance calculated by the backend.
+      setBook((prev) =>
+        prev
+          ? {
+              ...prev,
+              balance: result.balance
+            }
+          : prev
+      );
+
+      setSelectedExpenseIds(new Set());
+      setIsSelectionMode(false);
+    } catch (error) {
+      console.error("Bulk delete failed:", error);
+      setBulkDeleteError(
+        "Unable to delete selected transactions. Please try again."
+      );
+    } finally {
+      setIsBulkDeleting(false);
+    }
+  };
+
   return (
     <div className="w-full flex flex-col flex-1 bg-slate-900 text-white">
 
@@ -291,15 +422,77 @@ export default function BookPage() {
               </p>
             </div>
 
-            <button
-              type="button"
-              onClick={() => setIsFiltersOpen((prev) => !prev)}
-              className="bg-slate-950 text-green-400 px-4 py-2 rounded-full cursor-pointer hover:bg-slate-700 transition-colors whitespace-nowrap"
-            >
-              {isFiltersOpen ? "Hide filters ▲" : "Show filters ▼"}
-            </button>
+            <div className="flex gap-2 flex-wrap justify-end">
+              <button
+                type="button"
+                onClick={toggleSelectionMode}
+                disabled={isBulkDeleting}
+                className={`px-4 py-2 rounded-full cursor-pointer transition-colors whitespace-nowrap disabled:opacity-50 ${
+                  isSelectionMode
+                    ? "bg-red-500 text-white"
+                    : "bg-slate-950 text-green-400 hover:bg-slate-700"
+                }`}
+              >
+                {isSelectionMode ? "Cancel selection" : "Select"}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setIsFiltersOpen((prev) => !prev)}
+                className="bg-slate-950 text-green-400 px-4 py-2 rounded-full cursor-pointer hover:bg-slate-700 transition-colors whitespace-nowrap"
+              >
+                {isFiltersOpen ? "Hide filters ▲" : "Show filters ▼"}
+              </button>
+            </div>
 
           </div>
+
+          {/* Bulk Selection Controls */}
+          {isSelectionMode && (
+            <div className="mt-4 p-3 bg-slate-900 rounded-xl">
+
+              <div className="flex justify-between items-center gap-2 flex-wrap">
+
+                <div>
+                  <p className="font-semibold">
+                    {selectedExpenseIds.size} selected
+                  </p>
+
+                  <p className="text-xs text-slate-400">
+                    Select transactions from the currently displayed results.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={toggleSelectAllVisible}
+                  disabled={filteredExpenses.length === 0 || isBulkDeleting}
+                  className="text-sm text-green-400 hover:text-green-300 cursor-pointer disabled:text-slate-600 disabled:cursor-not-allowed"
+                >
+                  {allVisibleSelected ? "Deselect visible" : "Select all visible"}
+                </button>
+
+              </div>
+
+              <button
+                type="button"
+                onClick={handleBulkDelete}
+                disabled={selectedExpenseIds.size === 0 || isBulkDeleting}
+                className="w-full mt-3 p-3 rounded-xl bg-red-500 text-white font-semibold hover:bg-red-600 transition-colors disabled:bg-slate-700 disabled:text-slate-400 disabled:cursor-not-allowed"
+              >
+                {isBulkDeleting
+                  ? "Deleting..."
+                  : `Delete Selected (${selectedExpenseIds.size})`}
+              </button>
+
+              {bulkDeleteError && (
+                <p className="text-red-400 text-sm mt-2 text-center">
+                  {bulkDeleteError}
+                </p>
+              )}
+
+            </div>
+          )}
 
           {isFiltersOpen && (
             <div className="mt-4">
@@ -480,46 +673,85 @@ export default function BookPage() {
           </div>
         )}
 
-        {filteredExpenses.map((e) => (
-          <div
-            key={e._id}
-            id={e._id}
-            className="ml-2 mb-2 mr-2 bg-slate-800 p-3 rounded-2xl md:self-center md:w-1/2 md:text-lg overflow-hidden cursor-pointer hover:bg-slate-700 transition-colors"
-            onClick={() => {
-              setVisibleExpense(e);
-              setIsExpenseViewOpen(true);
-            }}
-          >
+        {filteredExpenses.map((e) => {
+          const isSelected = selectedExpenseIds.has(e._id);
 
-            <p>
-              msg:
-              <span className="text-slate-300">
-                {" " + (e.message || "No description")}
-              </span>
-            </p>
+          return (
+            <div
+              key={e._id}
+              id={e._id}
+              className={`ml-2 mb-2 mr-2 bg-slate-800 p-3 rounded-2xl md:self-center md:w-1/2 md:text-lg overflow-hidden transition-colors ${
+                isSelectionMode
+                  ? "cursor-pointer hover:bg-slate-700"
+                  : "cursor-pointer hover:bg-slate-700"
+              } ${
+                isSelected ? "border-2 border-green-400" : "border-2 border-transparent"
+              }`}
+              onClick={() => {
+                if (isSelectionMode) {
+                  toggleExpenseSelection(e._id);
+                  return;
+                }
 
-            <p>
-              amt:
-              <span className={e.amount < 0 ? "text-red-400" : "text-green-400"}>
-                {" " + e.amount}
-              </span>
-            </p>
+                setVisibleExpense(e);
+                setIsExpenseViewOpen(true);
+              }}
+            >
 
-            <p>
-              date:
-              {" " + (
-                e.expense_date
-                  ? getDateKey(e.expense_date)
-                  : "N/A"
-              )}
-            </p>
+              <div className="flex items-start gap-3">
 
-          </div>
-        ))}
+                {isSelectionMode && (
+                  <input
+                    type="checkbox"
+                    checked={isSelected}
+                    onChange={() => toggleExpenseSelection(e._id)}
+                    onClick={(event) => event.stopPropagation()}
+                    className="mt-1 w-5 h-5 accent-green-400 cursor-pointer shrink-0"
+                    aria-label={`Select transaction ${e.message || e._id}`}
+                  />
+                )}
+
+                <div className="flex-1 min-w-0">
+
+                  <p>
+                    msg:
+                    <span className="text-slate-300">
+                      {" " + (e.message || "No description")}
+                    </span>
+                  </p>
+
+                  <p>
+                    amt:
+                    <span className={e.amount < 0 ? "text-red-400" : "text-green-400"}>
+                      {" " + e.amount}
+                    </span>
+                  </p>
+
+                  <p>
+                    date:
+                    {" " + (
+                      e.expense_date
+                        ? getDateKey(e.expense_date)
+                        : "N/A"
+                    )}
+                  </p>
+
+                </div>
+
+                {isSelected && isSelectionMode && (
+                  <span className="text-green-400 text-sm font-semibold shrink-0">
+                    Selected
+                  </span>
+                )}
+
+              </div>
+
+            </div>
+          );
+        })}
 
       </div>
 
     </div>
   );
 }
-

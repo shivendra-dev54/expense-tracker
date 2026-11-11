@@ -161,26 +161,132 @@ export const deleteExpenseService = async (
 
   const session = await mongoose.startSession();
 
-  let expense;
+  let deletedExpense;
+
   try {
     await session.withTransaction(async () => {
-      expense = await Expense.findOneAndDelete({
+      const expense = await Expense.findOne({
         user_id,
         _id: expense_id
-      });
+      }).session(session);
 
       if (!expense) {
         throw new NotFoundError();
       }
 
-      // balance update
-      const book = await EntryBook.findById(expense.entrybook_id);
-      book.balance -= parseInt(expense.amount);
-      await book.save();
+      const book = await EntryBook.findOne({
+        _id: expense.entrybook_id,
+        user_id
+      }).session(session);
+
+      if (!book) {
+        throw new NotFoundError();
+      }
+
+      await Expense.deleteOne(
+        {
+          _id: expense_id,
+          user_id
+        },
+        { session }
+      );
+
+      book.balance -= expense.amount;
+      await book.save({ session });
+
+      deletedExpense = expense;
     });
-  }
-  finally {
+  } finally {
     await session.endSession();
   }
-  return expense;
-}
+
+  return deletedExpense;
+};
+
+
+
+export const bulkDeleteExpenseService = async (
+  user_id: Types.ObjectId,
+  book_id: string,
+  expense_ids: string[]
+) => {
+  if (
+    !book_id ||
+    !Types.ObjectId.isValid(book_id) ||
+    !Array.isArray(expense_ids) ||
+    expense_ids.length === 0 ||
+    expense_ids.some((id) => !Types.ObjectId.isValid(id))
+  ) {
+    throw new InvalidDataError();
+  }
+
+  const uniqueIds = [...new Set(expense_ids)];
+
+  if (uniqueIds.length !== expense_ids.length) {
+    throw new InvalidDataError();
+  }
+
+  await dbConnect();
+
+  const session = await mongoose.startSession();
+
+  let result;
+
+  try {
+    await session.withTransaction(async () => {
+      const book = await EntryBook.findOne({
+        _id: book_id,
+        user_id
+      }).session(session);
+
+      if (!book) {
+        throw new NotFoundError();
+      }
+
+      const expenses = await Expense.find({
+        _id: { $in: uniqueIds },
+        user_id,
+        entrybook_id: book._id
+      }).session(session);
+
+      // Reject the entire operation if even one selected expense
+      // doesn't belong to this user and book, or no longer exists.
+      if (expenses.length !== uniqueIds.length) {
+        throw new NotFoundError();
+      }
+
+      const totalAmount = expenses.reduce(
+        (total, expense) => total + expense.amount,
+        0
+      );
+
+      const deletedIds = expenses.map((expense) => expense._id.toString());
+
+      const deleteResult = await Expense.deleteMany(
+        {
+          _id: { $in: uniqueIds },
+          user_id,
+          entrybook_id: book._id
+        },
+        { session }
+      );
+
+      if (deleteResult.deletedCount !== uniqueIds.length) {
+        throw new Error("Bulk deletion failed.");
+      }
+
+      book.balance -= totalAmount;
+      await book.save({ session });
+
+      result = {
+        deleted_count: deleteResult.deletedCount,
+        deleted_ids: deletedIds,
+        balance: book.balance
+      };
+    });
+  } finally {
+    await session.endSession();
+  }
+
+  return result;
+};
